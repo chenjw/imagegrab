@@ -7,7 +7,6 @@
 	<classpathentry kind="lib" path="/imagegrab.lib/lib/commons-logging-1.1.1.jar"/>
 	<classpathentry kind="lib" path="/imagegrab.lib/lib/fastjson-1.1.17.jar"/>
 	<classpathentry kind="lib" path="/imagegrab.lib/lib/sourceforge.spring-2.5.6.jar"/>
-	<classpathentry kind="lib" path="/imagegrab.lib/lib/commons-collections-3.1-sources.jar"/>
 	<classpathentry kind="lib" path="/imagegrab.lib/lib/commons-collections-3.1.jar"/>
 	<classpathentry kind="lib" path="/imagegrab.lib/lib/commons-io-1.4.jar"/>
 	<classpathentry kind="lib" path="/imagegrab.lib/lib/commons-lang-2.4.jar"/>
