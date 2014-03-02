@@ -27,9 +27,7 @@ import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.ConnectTimeoutException;
 import org.apache.http.conn.ConnectionPoolTimeoutException;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
-import org.apache.http.conn.socket.LayeredConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.BasicCookieStore;
@@ -42,15 +40,13 @@ import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 
-import com.chenjw.client.exception.ErrorCodeEnum;
-import com.chenjw.client.exception.HttpClientException;
 import com.chenjw.logger.Logger;
 
 public class SimpleHttpClient implements com.chenjw.imagegrab.httpclient.HttpClient {
     public static final Logger       LOGGER                = Logger
                                                                .getLogger(SimpleHttpClient.class);
-    private int                      httpConnectionTimeout = 100000;
-    private int                      socketTimeout         = 100000;
+    private int                      httpConnectionTimeout = 10000;
+    private int                      socketTimeout         = 10000;
 
     private int                      maxTotalConnections   = 30;
     private int                      defaultMaxPerRoute   = 10;
@@ -61,20 +57,12 @@ public class SimpleHttpClient implements com.chenjw.imagegrab.httpclient.HttpCli
     /** 位置key */
 
     public void init() {
-
-        LayeredConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(
-            MySSLSocketFactory.createSSLContext(),
-            SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
         Registry<ConnectionSocketFactory> r = RegistryBuilder.<ConnectionSocketFactory> create()
-            .register("http", PlainConnectionSocketFactory.getSocketFactory())
-            .register("https", sslsf).build();
-
+            .register("http", PlainConnectionSocketFactory.getSocketFactory()).build();
         PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager(r);
         cm.setMaxTotal(maxTotalConnections);
         cm.setDefaultMaxPerRoute(defaultMaxPerRoute);
         httpClientBuilder = HttpClients.custom().setConnectionManager(cm);
-
-
         requestConfig = RequestConfig.custom().setSocketTimeout(socketTimeout)
             .setConnectTimeout(httpConnectionTimeout).build();
     }
@@ -112,7 +100,7 @@ public class SimpleHttpClient implements com.chenjw.imagegrab.httpclient.HttpCli
      * 设置http头
      * @param request
      */
-    private void setHeaders(HttpUriRequest request) {
+    private void setHeaders(HttpUriRequest request,Map<String,String> headers) {
         request.setHeader("Accept",
             "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
         request.setHeader("Accept-Encoding", "gzip, deflate");
@@ -120,25 +108,36 @@ public class SimpleHttpClient implements com.chenjw.imagegrab.httpclient.HttpCli
         request.setHeader("Connection", "keep-alive");
         request.setHeader("User-Agent",
             "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:26.0) Gecko/20100101 Firefox/26.0");
-        request
-            .setHeader(
-                "Referer",
-                "https://login.alibaba-inc.com/ssoLogin.htm?APP_NAME=EHR&BACK_URL=https%3A%2F%2Fehr.alibaba-inc.com%2Femployee%2F%2FempInfo.htm%3FworkNo%3D2&CANCEL_CERT=true&CONTEXT_PATH=employee");
-
+        if(headers!=null){
+            for(Entry<String,String> entry:headers.entrySet()){
+                request.setHeader(entry.getKey(), entry.getValue());
+            }
+        }
     }
 
     @Override
-    public String get(String sessionId, String url, Map<String, String> params, String encoding)
+    public String get(String sessionId, String url, Map<String, String> params,Map<String, String> headers, String encoding)
                                                                                                 throws HttpClientException {
         String realUrl = prepareUrl(url, params, encoding);
         HttpGet request = new HttpGet(realUrl);
         request.setConfig(requestConfig);
-        HttpRequestResult result = excuteMethod(sessionId, request, encoding);
+        HttpRequestResult result = excuteMethod(sessionId, request,headers, encoding);
         return result.getContent();
     }
 
     @Override
-    public String post(String sessionId, String url, Map<String, String> params, String encoding)
+    public byte[] getBytes(String sessionId, String url, Map<String, String> params,Map<String, String> headers,  String encoding)
+                                                                                                throws HttpClientException {
+        String realUrl = prepareUrl(url, params, encoding);
+        HttpGet request = new HttpGet(realUrl);
+        request.setConfig(requestConfig);
+        HttpRequestResult result = excuteMethod(sessionId, request,headers, encoding);
+        return result.getBytes();
+    }
+    
+    
+    @Override
+    public String post(String sessionId, String url, Map<String, String> params,Map<String, String> headers, String encoding)
                                                                                                  throws HttpClientException {
         String realUrl = url;
         HttpPost request = new HttpPost(realUrl);
@@ -154,7 +153,7 @@ public class SimpleHttpClient implements com.chenjw.imagegrab.httpclient.HttpCli
                 LOGGER.error("encoding not support " + encoding, e);
             }
         }
-        HttpRequestResult result = excuteMethod(sessionId, request, encoding);
+        HttpRequestResult result = excuteMethod(sessionId, request,headers, encoding);
         String r = result.getContent();
         LOGGER.debug(r);
         return r;
@@ -198,7 +197,7 @@ public class SimpleHttpClient implements com.chenjw.imagegrab.httpclient.HttpCli
         LOGGER.debug("******response************");
     }
 
-    public HttpRequestResult excuteMethod(String sessionId, HttpUriRequest request, String encoding)
+    public HttpRequestResult excuteMethod(String sessionId, HttpUriRequest request,Map<String,String> headers, String encoding)
                                                                                                     throws HttpClientException {
         HttpRequestResult result = new HttpRequestResult();
         HttpContext context = null;
@@ -208,7 +207,7 @@ public class SimpleHttpClient implements com.chenjw.imagegrab.httpclient.HttpCli
         CloseableHttpClient httpClient = getHttpClient();
         CloseableHttpResponse response = null;
         try {
-            setHeaders(request);
+            setHeaders(request,headers);
             logRequest(request, context);
 
             response = httpClient.execute(request, context);
@@ -260,15 +259,15 @@ public class SimpleHttpClient implements com.chenjw.imagegrab.httpclient.HttpCli
     }
 
     @Override
-    public String getInPage(String sessionId, String url, Map<String, String> params,
+    public String getInPage(String sessionId, String url, Map<String, String> params,Map<String, String> headers, 
                             String encoding) throws HttpClientException {
-        return this.get(sessionId, url, params, encoding);
+        return this.get(sessionId, url, params,headers, encoding);
     }
 
     @Override
-    public String postInPage(String sessionId, String url, Map<String, String> params,
+    public String postInPage(String sessionId, String url, Map<String, String> params,Map<String, String> headers, 
                              String encoding) throws HttpClientException {
-        return this.postInPage(sessionId, url, params, encoding);
+        return this.postInPage(sessionId, url, params,headers, encoding);
     }
 
 }

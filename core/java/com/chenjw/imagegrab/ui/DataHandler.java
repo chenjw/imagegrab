@@ -6,7 +6,7 @@ public interface DataHandler {
 
     public String getSource();
 
-    public String getGrayThreshold();
+    public String getMaxNum();
 
     public void appendResult(String text);
 

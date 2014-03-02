@@ -32,7 +32,7 @@ public class UserConfig {
         try {
             String setup = null;
             if (EnvUtils.getEnvMode() == EnvUtils.ENV_ECLIPSE) {
-                setup = "src/test/resources/user.ini";
+                setup = "config/user.ini";
             } else {
                 setup = "user.ini";
             }

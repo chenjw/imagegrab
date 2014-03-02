@@ -11,6 +11,9 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -18,6 +21,7 @@ import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.GroupLayout;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -29,9 +33,22 @@ import javax.swing.LayoutStyle;
 
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
+import com.chenjw.imagegrab.container.GrabberContainer;
 import com.chenjw.imagegrab.service.ImagegrabService;
 
 
+/**
+* This code was edited or generated using CloudGarden's Jigloo
+* SWT/Swing GUI Builder, which is free for non-commercial
+* use. If Jigloo is being used commercially (ie, by a corporation,
+* company or business for any purpose whatever) then you
+* should purchase a license for each developer using Jigloo.
+* Please visit www.cloudgarden.com for details.
+* Use of Jigloo implies acceptance of these licensing terms.
+* A COMMERCIAL LICENSE HAS NOT BEEN PURCHASED FOR
+* THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED
+* LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
+*/
 public class MainFrame extends JFrame {
 
     /**  */
@@ -44,20 +61,31 @@ public class MainFrame extends JFrame {
     private JTextArea         resultPane;
     private JPanel            configPanel      = new JPanel();
     private ImagegrabService  imagegrabService;
-    private HistoryComboBox grayThresholdComboBox;
+    private HistoryComboBox   maxNumComboBox;
     private JLabel            jLabel6;
     private JLabel            jLabel3;
-    private HistoryComboBox   sourceComboBox;
+    private JComboBox         sourceComboBox;
     // 用于异步执行任务
     private ExecutorService   executeService   = Executors.newSingleThreadExecutor();
 
     private void initSpring() {
         ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext(
-                "classpath*:grab-tool.xml");
-        imagegrabService= (ImagegrabService) ctx.getBean("imagegrabService");
-       System.out.println("spring inited!");
-       resultPane.append("启动成功！\n");
-       imagegrabService.setDataHandler(new DataHandler() {
+            "classpath*:grab-tool.xml");
+        imagegrabService = (ImagegrabService) ctx.getBean("imagegrabService");
+        System.out.println("spring inited!");
+        resultPane.append("启动成功！\n");
+        // 
+      
+        //
+        List<KeyValuePair> pairs=new ArrayList<KeyValuePair>();
+        for(Entry<String,String> entry:GrabberContainer.getIds().entrySet()){
+            pairs.add(new KeyValuePair(entry.getKey(),entry.getValue()));
+        }
+        ComboBoxModel historyComboBox1Model = new DefaultComboBoxModel(
+            pairs.toArray(new KeyValuePair[pairs.size()]));
+        sourceComboBox.setModel(historyComboBox1Model);
+        //
+        imagegrabService.setDataHandler(new DataHandler() {
 
             @Override
             public void appendResult(String text) {
@@ -77,16 +105,35 @@ public class MainFrame extends JFrame {
 
             @Override
             public String getSource() {
-                return sourceComboBox.getText();
+                KeyValuePair pair = (KeyValuePair) sourceComboBox.getSelectedItem();
+                if (pair == null) {
+                    return null;
+                }
+                return pair.key;
             }
 
             @Override
-            public String getGrayThreshold() {
-                return grayThresholdComboBox.getText();
+            public String getMaxNum() {
+                return maxNumComboBox.getText();
             }
 
         });
-       
+        
+    }
+
+    private class KeyValuePair {
+        private String key;
+        private String text;
+
+        public KeyValuePair(String key, String text) {
+            this.key = key;
+            this.text = text;
+        }
+
+        public String toString() {
+            return text;
+        }
+
     }
 
     public MainFrame() {
@@ -140,23 +187,22 @@ public class MainFrame extends JFrame {
             jLabel1.setText("搜索关键词");
         }
         {
-            resultPane = new JTextArea();
             resultScrollPane = new JScrollPane(resultPane);
-            resultScrollPane.setViewportView(resultPane);
+            {
+                resultPane = new JTextArea();
+                resultScrollPane.setViewportView(resultPane);
+            }
         }
         {
-            sourceComboBox = new HistoryComboBox("testGroup");
+            sourceComboBox = new JComboBox();
         }
         {
-            ComboBoxModel historyComboBox1Model = 
-                    new DefaultComboBoxModel(
-                        new String[] { "Item One", "Item Two" });
-            grayThresholdComboBox = new HistoryComboBox("testGroup");
-            grayThresholdComboBox.setModel(historyComboBox1Model);
+
+            maxNumComboBox = new HistoryComboBox("grayThreshold");
         }
         {
             jLabel6 = new JLabel();
-            jLabel6.setText("灰度阀值");
+            jLabel6.setText("抓取数量");
         }
         {
             jLabel3 = new JLabel();
@@ -164,41 +210,42 @@ public class MainFrame extends JFrame {
         }
 
         {
-            searchWordComboBox = new HistoryComboBox("samplePath");
+            searchWordComboBox = new HistoryComboBox("searchWord");
         }
+        configPanelLayout.setHorizontalGroup(configPanelLayout.createSequentialGroup()
+            .addContainerGap()
+            .addGroup(configPanelLayout.createParallelGroup()
+                .addGroup(configPanelLayout.createSequentialGroup()
+                    .addComponent(resultScrollPane, GroupLayout.PREFERRED_SIZE, 979, GroupLayout.PREFERRED_SIZE)
+                    .addGap(0, 0, Short.MAX_VALUE))
+                .addGroup(GroupLayout.Alignment.LEADING, configPanelLayout.createSequentialGroup()
+                    .addPreferredGap(resultScrollPane, jLabel1, LayoutStyle.ComponentPlacement.INDENT)
+                    .addComponent(jLabel1, GroupLayout.PREFERRED_SIZE, 75, GroupLayout.PREFERRED_SIZE)
+                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                    .addComponent(searchWordComboBox, 0, 213, Short.MAX_VALUE)
+                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                    .addComponent(jLabel3, GroupLayout.PREFERRED_SIZE, 39, GroupLayout.PREFERRED_SIZE)
+                    .addComponent(sourceComboBox, GroupLayout.PREFERRED_SIZE, 112, GroupLayout.PREFERRED_SIZE)
+                    .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                    .addComponent(jLabel6, GroupLayout.PREFERRED_SIZE, 64, GroupLayout.PREFERRED_SIZE)
+                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                    .addComponent(maxNumComboBox, GroupLayout.PREFERRED_SIZE, 72, GroupLayout.PREFERRED_SIZE)
+                    .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                    .addComponent(downloadButton, GroupLayout.PREFERRED_SIZE, 162, GroupLayout.PREFERRED_SIZE)
+                    .addGap(0, 164, GroupLayout.PREFERRED_SIZE)))
+            .addContainerGap());
         configPanelLayout.setVerticalGroup(configPanelLayout.createSequentialGroup()
+            .addContainerGap()
             .addGroup(configPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                 .addComponent(jLabel6, GroupLayout.Alignment.BASELINE, GroupLayout.PREFERRED_SIZE, 27, GroupLayout.PREFERRED_SIZE)
                 .addComponent(jLabel1, GroupLayout.Alignment.BASELINE, GroupLayout.PREFERRED_SIZE, 27, GroupLayout.PREFERRED_SIZE)
                 .addComponent(searchWordComboBox, GroupLayout.Alignment.BASELINE, GroupLayout.PREFERRED_SIZE, 27, GroupLayout.PREFERRED_SIZE)
-                .addComponent(downloadButton, GroupLayout.Alignment.BASELINE, GroupLayout.PREFERRED_SIZE, 27, GroupLayout.PREFERRED_SIZE)
                 .addComponent(jLabel3, GroupLayout.Alignment.BASELINE, GroupLayout.PREFERRED_SIZE, 27, GroupLayout.PREFERRED_SIZE)
                 .addComponent(sourceComboBox, GroupLayout.Alignment.BASELINE, GroupLayout.PREFERRED_SIZE, 27, GroupLayout.PREFERRED_SIZE)
-                .addComponent(grayThresholdComboBox, GroupLayout.Alignment.BASELINE, GroupLayout.PREFERRED_SIZE, 27, GroupLayout.PREFERRED_SIZE))
-            .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-            .addComponent(resultScrollPane, 0, 686, Short.MAX_VALUE)
-            .addContainerGap());
-        configPanelLayout.setHorizontalGroup(configPanelLayout.createSequentialGroup()
-            .addContainerGap()
-            .addGroup(configPanelLayout.createParallelGroup()
-                .addGroup(GroupLayout.Alignment.LEADING, configPanelLayout.createSequentialGroup()
-                    .addComponent(jLabel1, GroupLayout.PREFERRED_SIZE, 87, GroupLayout.PREFERRED_SIZE)
-                    .addComponent(searchWordComboBox, GroupLayout.PREFERRED_SIZE, 129, GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(jLabel3, GroupLayout.PREFERRED_SIZE, 64, GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(sourceComboBox, GroupLayout.PREFERRED_SIZE, 72, GroupLayout.PREFERRED_SIZE)
-                    .addGap(24)
-                    .addComponent(jLabel6, GroupLayout.PREFERRED_SIZE, 64, GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(grayThresholdComboBox, GroupLayout.PREFERRED_SIZE, 72, GroupLayout.PREFERRED_SIZE)
-                    .addGap(34)
-                    .addComponent(downloadButton, GroupLayout.PREFERRED_SIZE, 162, GroupLayout.PREFERRED_SIZE)
-                    .addGap(0, 235, Short.MAX_VALUE))
-                .addGroup(configPanelLayout.createSequentialGroup()
-                    .addComponent(resultScrollPane, GroupLayout.PREFERRED_SIZE, 979, GroupLayout.PREFERRED_SIZE)
-                    .addGap(0, 0, Short.MAX_VALUE)))
-            .addContainerGap());
+                .addComponent(downloadButton, GroupLayout.Alignment.BASELINE, GroupLayout.PREFERRED_SIZE, 27, GroupLayout.PREFERRED_SIZE)
+                .addComponent(maxNumComboBox, GroupLayout.Alignment.BASELINE, GroupLayout.PREFERRED_SIZE, 27, GroupLayout.PREFERRED_SIZE))
+            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 698, GroupLayout.PREFERRED_SIZE)
+            .addComponent(resultScrollPane, GroupLayout.PREFERRED_SIZE, 686, GroupLayout.PREFERRED_SIZE));
         //添加其他组件
         pack();
         this.setSize(1010, 768);

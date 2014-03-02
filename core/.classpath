@@ -2,6 +2,7 @@
 <classpath>
 	<classpathentry kind="src" path="resources"/>
 	<classpathentry kind="src" path="java"/>
+	<classpathentry kind="src" path="config"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="/imagegrab.lib/lib/commons-logging-1.1.1.jar"/>
 	<classpathentry kind="lib" path="/imagegrab.lib/lib/fastjson-1.1.17.jar"/>
@@ -16,5 +17,8 @@
 	<classpathentry kind="lib" path="/imagegrab.lib/lib/vtd-xml-2.11.jar"/>
 	<classpathentry kind="lib" path="/imagegrab.lib/lib/dynaComponent-1.0.0.jar"/>
 	<classpathentry kind="lib" path="/imagegrab.lib/lib/parser-1.0.0.jar"/>
+	<classpathentry kind="lib" path="/imagegrab.lib/lib/httpclient-4.3.1.jar"/>
+	<classpathentry kind="lib" path="/imagegrab.lib/lib/httpcore-4.3.jar"/>
+	<classpathentry kind="lib" path="/imagegrab.lib/lib/httpmime-4.3.1.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>
