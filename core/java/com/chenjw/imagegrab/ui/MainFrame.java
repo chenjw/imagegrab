@@ -198,7 +198,7 @@ public class MainFrame extends JFrame {
         }
         {
 
-            maxNumComboBox = new HistoryComboBox("grayThreshold");
+            maxNumComboBox = new HistoryComboBox("maxNum");
         }
         {
             jLabel6 = new JLabel();
