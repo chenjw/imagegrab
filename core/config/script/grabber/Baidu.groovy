@@ -129,10 +129,8 @@ public class Baidu extends GrabberTemplate implements Grabber {
        
         boolean success=false;
         try{
-            
-            String aaa='Referer:http://image.baidu.com/i?tn=baiduimage&ipn=r&ct=201326592&cl=2&lm=-1&st=-1&fm=index&fr=&sf=1&fmq=&pv=&ic=0&nc=1&z=&se=1&showtab=0&fb=0&width=&height=&face=0&istype=2&ie=utf-8&word=%E5%B0%8F%E7%A5%A8';
-
-            byte[] bytes=httpClient.getBytes("1", url, null,null, null);
+            def header=['Referer':url];
+            byte[] bytes=httpClient.getBytes("1", url, null,header, null);
             if(bytes==null || bytes.length<2048){
                 return;
             }
